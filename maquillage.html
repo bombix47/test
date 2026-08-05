@@ -113,10 +113,12 @@
   input[type=range]{width:100%; accent-color:var(--rose-d)}
   .blendsel{width:100%; padding:.45rem; border-radius:8px; border:1px solid var(--line); font-size:.8rem; background:#fff; color:var(--ink)}
 
+  .toolnote{font-size:.72rem; color:var(--muted); line-height:1.5; margin-top:.5rem;
+    background:#fbf2f5; border:1px solid var(--line); border-radius:8px; padding:.5rem .6rem}
+  .toolnote b{color:var(--rose-d)}
   .footnote{padding:.8rem 1.1rem; font-size:.68rem; color:var(--muted); line-height:1.5}
 
   /* Mobile */
-  #panelToggle{display:none}
   @media (max-width:820px){
     main{flex-direction:column}
     aside{width:100%; height:46%; border-left:none; border-top:1px solid var(--line)}
@@ -130,12 +132,13 @@
   <div class="logo">💄 <b>Studio</b> Maquillage <span>— essayage virtuel</span></div>
   <div class="spacer"></div>
   <div class="tbar">
-    <label class="tool primary"><input id="file" type="file" accept="image/*" hidden>📷 Importer une photo</label>
+    <label class="tool primary"><input id="file" type="file" accept="image/*" hidden>📷 Importer</label>
     <button class="tool" id="modeBrush">🖌️ Pinceau</button>
+    <button class="tool" id="modeSponge">🧽 Éponge</button>
+    <button class="tool" id="modeErase">✕ Gomme</button>
     <button class="tool" id="modePan">✋ Déplacer</button>
-    <button class="tool" id="eraser">🧽 Gomme</button>
     <button class="tool" id="undo" disabled>↶ Annuler</button>
-    <button class="tool" id="clear">🗑️ Tout effacer</button>
+    <button class="tool" id="clear">🗑️ Effacer tout</button>
     <button class="tool" id="download" disabled>⬇️ Enregistrer</button>
   </div>
 </header>
@@ -146,7 +149,7 @@
     <div class="hint" id="hint">
       <div class="big">💄</div>
       <div>Importe une photo de ton visage pour commencer.<br>
-      Choisis une teinte, puis <b>peins</b> sur les paupières, les lèvres ou les joues.</div>
+      Pose un <b>fond de teint</b>, ajoute le maquillage, puis fonds le tout avec l'<b>éponge</b>.</div>
     </div>
     <div class="zoombar">
       <button id="zout">−</button>
@@ -178,35 +181,44 @@
       <div class="cats" id="cats"></div>
       <div class="swatches" id="swatches" style="margin-top:.8rem"></div>
       <div class="customrow">
-        <input type="color" id="custom" value="#b5561e">
+        <input type="color" id="custom" value="#e6c2a0">
         <span>Couleur personnalisée</span>
       </div>
     </div>
 
     <div class="sect">
-      <h3>3 · Réglages du pinceau</h3>
+      <h3>3 · Outil actif</h3>
       <div class="slider">
-        <label>Taille du pinceau <b id="sizeV">30 px</b></label>
-        <input type="range" id="size" min="4" max="140" value="30">
+        <label>Taille <b id="sizeV">30 px</b></label>
+        <input type="range" id="size" min="4" max="180" value="30">
       </div>
       <div class="slider">
-        <label>Intensité / couvrance <b id="covV">30 %</b></label>
+        <label>Intensité <b id="covV">30 %</b></label>
         <input type="range" id="cov" min="3" max="100" value="30">
       </div>
-      <div class="slider" style="margin-bottom:0">
-        <label>Fondu (mode de fusion)</label>
-        <select class="blendsel" id="blend">
-          <option value="multiply">Pigmenté (multiply)</option>
-          <option value="soft-light">Naturel / poudré (soft-light)</option>
-          <option value="screen">Lumineux (screen)</option>
-          <option value="source-over">Couvrant (normal)</option>
+      <div class="toolnote" id="toolnote"></div>
+    </div>
+
+    <div class="sect">
+      <h3>4 · Rendu du maquillage</h3>
+      <div class="slider">
+        <label>Fini</label>
+        <select class="blendsel" id="finish">
+          <option value="soft-light">Naturel / poudré</option>
+          <option value="source-over">Satiné / couvrant</option>
+          <option value="multiply">Pigmenté</option>
         </select>
+      </div>
+      <div class="slider" style="margin-bottom:0">
+        <label>Transparence sur la peau <b id="realV">90 %</b></label>
+        <input type="range" id="real" min="20" max="100" value="90">
       </div>
     </div>
 
     <div class="footnote">
-      Astuce&nbsp;: molette pour zoomer, mode ✋ pour déplacer, deux doigts pour pincer sur mobile.
-      Le rendu applique la couleur en transparence sur la texture réelle de la peau — passe plusieurs fois pour intensifier.
+      Molette = zoom · mode ✋ = déplacer · deux doigts = pincer (mobile).<br>
+      La couleur s'applique en transparence sur la texture réelle de la peau. Passe plusieurs fois pour intensifier,
+      puis lisse les transitions avec l'éponge.
     </div>
   </aside>
 </main>
@@ -214,16 +226,23 @@
 <script>
 "use strict";
 (function(){
-  // ---------- Données teintes ----------
+  // ---------- Teintes ----------
   const CATS = [
-    {id:'eyes',  name:'Yeux',       blend:'multiply',  size:26, cov:32},
-    {id:'liner', name:'Eyeliner',   blend:'multiply',  size:8,  cov:70},
-    {id:'lips',  name:'Lèvres',     blend:'multiply',  size:22, cov:48},
-    {id:'blush', name:'Blush',      blend:'soft-light',size:64, cov:26},
-    {id:'glow',  name:'Enlumineur', blend:'soft-light',size:42, cov:22},
-    {id:'bronze',name:'Bronzer',    blend:'multiply',  size:48, cov:26},
+    {id:'foundation', name:'Fond de teint', size:80, cov:38},
+    {id:'eyes',  name:'Yeux',       size:26, cov:32},
+    {id:'liner', name:'Eyeliner',   size:8,  cov:70},
+    {id:'lips',  name:'Lèvres',     size:22, cov:48},
+    {id:'blush', name:'Blush',      size:64, cov:26},
+    {id:'glow',  name:'Enlumineur', size:42, cov:22},
+    {id:'bronze',name:'Bronzer',    size:48, cov:26},
   ];
   const SHADES = {
+    foundation:[
+      ['Porcelaine','#f0d9cf','froid'],['Ivoire','#efd3bd','neutre'],['Beige clair','#e9c9a8','chaud'],
+      ['Sable','#dcb48c','chaud'],['Doré moyen','#c99a6e','chaud'],['Ambre','#b07f56','neutre'],
+      ['Caramel','#9c6a44','chaud'],['Noisette','#8a5c42','froid'],['Cacao','#6e4530','neutre'],
+      ['Ébène','#4f3020','neutre'],
+    ],
     eyes:[
       ['Champagne','#e6c9a8','neutre'],['Taupe','#8b7466','neutre'],['Bronze doré','#a9722e','chaud'],
       ['Cuivre','#b5561e','chaud'],['Rose vieilli','#b77b7b','froid'],['Prune','#6e3b5c','froid'],
@@ -254,24 +273,28 @@
       ['Terre','#96633c','neutre'],['Ambre','#b57a3e','chaud'],
     ],
   };
-  const BLEND_ORDER = ['multiply','soft-light','screen','source-over'];
+  const TOOLNOTES = {
+    brush:'<b>Pinceau</b> : dépose la teinte en transparence. Repasse pour intensifier.',
+    sponge:'<b>Éponge</b> : estompe, diffuse et <b>mélange</b> les couleurs superposées (fond de teint + maquillage) pour un fondu naturel.',
+    erase:'<b>Gomme</b> : retire le maquillage appliqué.',
+    pan:'<b>Déplacer</b> : fais glisser la photo. Molette / pincement pour zoomer.',
+  };
 
   // ---------- État ----------
   const stage=document.getElementById('stage');
   const canvas=document.getElementById('canvas');
   const ctx=canvas.getContext('2d');
   const hint=document.getElementById('hint');
-  let baseCanvas=null, imgW=0, imgH=0;
-  const layers={};                 // blendMode -> offscreen canvas
-  let scale=1, offX=0, offY=0;     // transform (px CSS)
-  let cssW=0, cssH=0, dpr=window.devicePixelRatio||1;
-  let mode='pan';                  // 'brush' | 'pan'
-  let erasing=false;
-  let curCat=CATS[0], curColor='#b5561e', curBlend='multiply';
-  let brushSize=30, coverage=30;
+  let baseCanvas=null, mk=null, mkCtx=null, imgW=0, imgH=0;
+  let scale=1, offX=0, offY=0, cssW=0, cssH=0, dpr=window.devicePixelRatio||1;
+  let mode='pan';
+  let curCat=CATS[0], curColor='#e6c2a0';
+  let brushSize=80, coverage=38, finish='soft-light', realism=0.9;
+  let undertone='tous';
   const undoStack=[];
 
   // ---------- Utilitaires ----------
+  const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
   function hexToRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
     return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16)};}
   function resizeDisplay(){
@@ -279,13 +302,6 @@
     cssW=stage.clientWidth; cssH=stage.clientHeight;
     canvas.width=Math.round(cssW*dpr); canvas.height=Math.round(cssH*dpr);
     render();
-  }
-  function ensureLayer(blend){
-    if(!layers[blend]){
-      const c=document.createElement('canvas'); c.width=imgW; c.height=imgH;
-      layers[blend]=c;
-    }
-    return layers[blend];
   }
   function render(){
     ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -295,11 +311,12 @@
     ctx.save();
     ctx.translate(offX,offY); ctx.scale(scale,scale);
     ctx.drawImage(baseCanvas,0,0);
-    for(const b of BLEND_ORDER){
-      const c=layers[b];
-      if(c){ ctx.globalCompositeOperation=b; ctx.drawImage(c,0,0); }
+    if(mk){
+      ctx.globalCompositeOperation=finish;
+      ctx.globalAlpha=realism;
+      ctx.drawImage(mk,0,0);
+      ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
     }
-    ctx.globalCompositeOperation='source-over';
     ctx.restore();
     document.getElementById('zlvl').textContent=Math.round(scale*100)+' %';
   }
@@ -316,145 +333,182 @@
   function zoomAt(cx,cy,factor){
     const r=canvas.getBoundingClientRect();
     const px=cx-r.left, py=cy-r.top;
-    const nx=Math.min(8,Math.max(0.05,scale*factor));
+    const nx=clamp(scale*factor,0.05,8);
     offX=px-(px-offX)*(nx/scale); offY=py-(py-offY)*(nx/scale);
     scale=nx; render();
   }
 
-  // ---------- Pinceau ----------
-  function stamp(lctx,x,y,r,rgb,a,erase){
-    const g=lctx.createRadialGradient(x,y,0,x,y,r);
+  // ---------- Pinceau / Gomme ----------
+  function stamp(x,y,r,rgb,a,erase){
+    const g=mkCtx.createRadialGradient(x,y,0,x,y,r);
     if(erase){
-      g.addColorStop(0,'rgba(0,0,0,'+a+')');
-      g.addColorStop(.55,'rgba(0,0,0,'+(a*.7)+')');
-      g.addColorStop(1,'rgba(0,0,0,0)');
-      lctx.globalCompositeOperation='destination-out';
+      g.addColorStop(0,'rgba(0,0,0,'+a+')'); g.addColorStop(.55,'rgba(0,0,0,'+(a*.7)+')');
+      g.addColorStop(1,'rgba(0,0,0,0)'); mkCtx.globalCompositeOperation='destination-out';
     }else{
       const c=rgb.r+','+rgb.g+','+rgb.b;
-      g.addColorStop(0,'rgba('+c+','+a+')');
-      g.addColorStop(.55,'rgba('+c+','+(a*.7)+')');
-      g.addColorStop(1,'rgba('+c+',0)');
-      lctx.globalCompositeOperation='source-over';
+      g.addColorStop(0,'rgba('+c+','+a+')'); g.addColorStop(.55,'rgba('+c+','+(a*.7)+')');
+      g.addColorStop(1,'rgba('+c+',0)'); mkCtx.globalCompositeOperation='source-over';
     }
-    lctx.fillStyle=g;
-    lctx.beginPath(); lctx.arc(x,y,r,0,Math.PI*2); lctx.fill();
-    lctx.globalCompositeOperation='source-over';
+    mkCtx.fillStyle=g; mkCtx.beginPath(); mkCtx.arc(x,y,r,0,Math.PI*2); mkCtx.fill();
+    mkCtx.globalCompositeOperation='source-over';
   }
-  let stroking=false, lastP=null, activeLayer=null;
-  function beginStroke(p){
-    activeLayer=ensureLayer(erasing?curBlend:curBlend);
-    // snapshot pour annulation
-    pushUndo(activeLayer);
-    stroking=true; lastP=p;
-    paintTo(p);
-  }
-  function paintTo(p){
-    if(!activeLayer) return;
-    const lctx=activeLayer.getContext('2d');
+  function paintStamp(p,erase){
     const rgb=hexToRgb(curColor);
-    const a=0.02+ (coverage/100)*0.23;   // couvrance par tampon
-    const r=brushSize;
-    const dx=p.x-lastP.x, dy=p.y-lastP.y;
-    const dist=Math.hypot(dx,dy);
-    const step=Math.max(1,r*0.28);
-    const n=Math.max(1,Math.floor(dist/step));
-    for(let i=0;i<=n;i++){
-      const x=lastP.x+dx*(i/n), y=lastP.y+dy*(i/n);
-      stamp(lctx,x,y,r,rgb,a,erasing);
-    }
-    lastP=p; render();
+    const a=0.02+(coverage/100)*0.23, r=brushSize;
+    stamp(p.x,p.y,r,rgb,a,erase);
   }
-  function endStroke(){ stroking=false; lastP=null; activeLayer=null; }
+
+  // ---------- Éponge (estompe / diffuse / mélange) ----------
+  function boxBlurPass(src,w,h,r){
+    const div=r*2+1, tmp=new Float32Array(src.length), out=new Float32Array(src.length);
+    for(let y=0;y<h;y++){ const row=y*w;
+      for(let c=0;c<4;c++){
+        let sum=0;
+        for(let x=-r;x<=r;x++) sum+=src[(row+clamp(x,0,w-1))*4+c];
+        for(let x=0;x<w;x++){
+          tmp[(row+x)*4+c]=sum/div;
+          sum+=src[(row+clamp(x+r+1,0,w-1))*4+c]-src[(row+clamp(x-r,0,w-1))*4+c];
+        }
+      }
+    }
+    for(let x=0;x<w;x++){
+      for(let c=0;c<4;c++){
+        let sum=0;
+        for(let y=-r;y<=r;y++) sum+=tmp[(clamp(y,0,h-1)*w+x)*4+c];
+        for(let y=0;y<h;y++){
+          out[(y*w+x)*4+c]=sum/div;
+          sum+=tmp[(clamp(y+r+1,0,h-1)*w+x)*4+c]-tmp[(clamp(y-r,0,h-1)*w+x)*4+c];
+        }
+      }
+    }
+    return out;
+  }
+  function blurRGBA(img,w,h,r,passes){
+    // premultiplié pour un mélange propre des couleurs et de la transparence
+    let d=new Float32Array(w*h*4); const s=img.data;
+    for(let i=0;i<w*h;i++){ const a=s[i*4+3]/255;
+      d[i*4]=s[i*4]*a; d[i*4+1]=s[i*4+1]*a; d[i*4+2]=s[i*4+2]*a; d[i*4+3]=s[i*4+3]; }
+    for(let p=0;p<passes;p++) d=boxBlurPass(d,w,h,r);
+    return d; // reste premultiplié, on démultiplie au moment du mélange
+  }
+  function spongeAt(p){
+    const r=Math.round(brushSize);
+    const x0=clamp(Math.floor(p.x-r),0,imgW), y0=clamp(Math.floor(p.y-r),0,imgH);
+    const x1=clamp(Math.ceil(p.x+r),0,imgW),  y1=clamp(Math.ceil(p.y+r),0,imgH);
+    const w=x1-x0, h=y1-y0; if(w<=1||h<=1)return;
+    const patch=mkCtx.getImageData(x0,y0,w,h);
+    const rad=clamp(Math.round(r/4),1,40);
+    const bl=blurRGBA(patch,w,h,rad,2);
+    const d=patch.data, cx=p.x-x0, cy=p.y-y0;
+    const strength=0.18+(coverage/100)*0.6;
+    for(let yy=0;yy<h;yy++){
+      for(let xx=0;xx<w;xx++){
+        const dx=xx-cx, dy=yy-cy, dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist>r)continue;
+        let m=1-dist/r; m=m*m*strength;         // masque doux
+        const i=(yy*w+xx)*4;
+        const ba=bl[i+3]; const inv=ba>0?255/ba:0; // démultiplication
+        const br=bl[i]*inv, bg=bl[i+1]*inv, bb=bl[i+2]*inv;
+        d[i]  =d[i]  +(br-d[i]  )*m;
+        d[i+1]=d[i+1]+(bg-d[i+1])*m;
+        d[i+2]=d[i+2]+(bb-d[i+2])*m;
+        d[i+3]=d[i+3]+(ba -d[i+3])*m;
+      }
+    }
+    mkCtx.putImageData(patch,x0,y0);
+  }
+
+  // ---------- Traits (interpolation) ----------
+  let stroking=false, lastP=null;
+  function stepAlong(p,fn,factor){
+    const dx=p.x-lastP.x, dy=p.y-lastP.y, dist=Math.hypot(dx,dy);
+    const step=Math.max(1,brushSize*factor), n=Math.max(1,Math.floor(dist/step));
+    for(let i=0;i<=n;i++) fn({x:lastP.x+dx*(i/n), y:lastP.y+dy*(i/n)});
+    lastP=p;
+  }
+  function beginStroke(p){
+    pushUndo(); stroking=true; lastP=p; doStep(p);
+    render();
+  }
+  function doStep(pt){
+    if(mode==='sponge') spongeAt(pt);
+    else paintStamp(pt, mode==='erase');
+  }
+  function moveStroke(p){
+    if(!stroking)return;
+    stepAlong(p, doStep, mode==='sponge'?0.5:0.28);
+    render();
+  }
+  function endStroke(){ stroking=false; lastP=null; }
 
   // ---------- Undo ----------
-  function pushUndo(layer){
-    try{
-      const lctx=layer.getContext('2d');
-      const data=lctx.getImageData(0,0,imgW,imgH);
-      undoStack.push({layer,data});
-      if(undoStack.length>25) undoStack.shift();
-    }catch(e){}
-    document.getElementById('undo').disabled=undoStack.length===0;
-  }
-  function pushUndoAll(){
-    const snap=[];
-    for(const b of BLEND_ORDER){ if(layers[b]){
-      snap.push({layer:layers[b], data:layers[b].getContext('2d').getImageData(0,0,imgW,imgH)});
-    }}
-    if(snap.length){ undoStack.push({multi:snap}); if(undoStack.length>25)undoStack.shift(); }
+  function pushUndo(){
+    if(!mk)return;
+    try{ undoStack.push(mkCtx.getImageData(0,0,imgW,imgH)); }catch(e){}
+    if(undoStack.length>20) undoStack.shift();
     document.getElementById('undo').disabled=undoStack.length===0;
   }
   function undo(){
-    const e=undoStack.pop(); if(!e)return;
-    if(e.multi){ e.multi.forEach(s=>s.layer.getContext('2d').putImageData(s.data,0,0)); }
-    else{ e.layer.getContext('2d').putImageData(e.data,0,0); }
+    const d=undoStack.pop(); if(!d)return;
+    mkCtx.putImageData(d,0,0);
     document.getElementById('undo').disabled=undoStack.length===0;
     render();
   }
 
-  // ---------- Chargement image ----------
+  // ---------- Image ----------
   function loadImage(file){
-    const url=URL.createObjectURL(file);
-    const img=new Image();
+    const url=URL.createObjectURL(file), img=new Image();
     img.onload=()=>{
-      const MAX=1600;
-      let w=img.naturalWidth, h=img.naturalHeight;
+      const MAX=1600; let w=img.naturalWidth, h=img.naturalHeight;
       const sc=Math.min(1,MAX/Math.max(w,h)); w=Math.round(w*sc); h=Math.round(h*sc);
       imgW=w; imgH=h;
       baseCanvas=document.createElement('canvas'); baseCanvas.width=w; baseCanvas.height=h;
       baseCanvas.getContext('2d').drawImage(img,0,0,w,h);
-      for(const k in layers) delete layers[k];
+      mk=document.createElement('canvas'); mk.width=w; mk.height=h;
+      mkCtx=mk.getContext('2d',{willReadFrequently:true});
       undoStack.length=0; document.getElementById('undo').disabled=true;
-      URL.revokeObjectURL(url);
-      hint.style.display='none';
+      URL.revokeObjectURL(url); hint.style.display='none';
       document.getElementById('download').disabled=false;
       fitView();
     };
     img.src=url;
   }
-
-  // ---------- Export ----------
   function download(){
     if(!baseCanvas)return;
     const out=document.createElement('canvas'); out.width=imgW; out.height=imgH;
-    const o=out.getContext('2d');
-    o.drawImage(baseCanvas,0,0);
-    for(const b of BLEND_ORDER){ if(layers[b]){ o.globalCompositeOperation=b; o.drawImage(layers[b],0,0);} }
-    o.globalCompositeOperation='source-over';
+    const o=out.getContext('2d'); o.drawImage(baseCanvas,0,0);
+    o.globalCompositeOperation=finish; o.globalAlpha=realism; o.drawImage(mk,0,0);
     const a=document.createElement('a'); a.download='maquillage-simulation.png';
     a.href=out.toDataURL('image/png'); a.click();
   }
 
-  // ---------- Interface : catégories & teintes ----------
+  // ---------- Catégories & teintes ----------
   const catsEl=document.getElementById('cats');
   CATS.forEach((c,i)=>{
     const b=document.createElement('button'); b.textContent=c.name;
     b.onclick=()=>selectCat(c,b); if(i===0)b.classList.add('active');
-    b.dataset.id=c.id; catsEl.appendChild(b);
+    catsEl.appendChild(b);
   });
   function selectCat(c,btn){
     curCat=c;
     [...catsEl.children].forEach(x=>x.classList.toggle('active',x===btn));
-    brushSize=c.size; coverage=c.cov; curBlend=c.blend;
-    document.getElementById('size').value=brushSize; document.getElementById('sizeV').textContent=brushSize+' px';
-    document.getElementById('cov').value=coverage; document.getElementById('covV').textContent=coverage+' %';
-    document.getElementById('blend').value=curBlend;
+    setSize(c.size); setCov(c.cov);
     renderSwatches();
+    if(mode==='pan'||mode==='erase') setMode('brush');
   }
-  let undertone='tous';
   function renderSwatches(){
     const wrap=document.getElementById('swatches'); wrap.innerHTML='';
     const list=SHADES[curCat.id].slice();
-    // teintes recommandées en premier
-    const reco=s=> undertone==='tous' ? false : (s[2]===undertone || s[2]==='neutre');
-    list.sort((a,b)=> (reco(b)?1:0)-(reco(a)?1:0));
+    const reco=s=> undertone==='tous'?false:(s[2]===undertone||s[2]==='neutre');
+    list.sort((a,b)=>(reco(b)?1:0)-(reco(a)?1:0));
     list.forEach(s=>{
       const d=document.createElement('div'); d.className='sw'; d.style.background=s[1];
       if(s[1]===curColor) d.classList.add('sel');
       if(reco(s)) d.classList.add('reco');
       d.innerHTML='<span class="tt">'+s[0]+'</span>';
       d.onclick=()=>{ curColor=s[1]; document.getElementById('custom').value=s[1];
-        [...wrap.children].forEach(x=>x.classList.remove('sel')); d.classList.add('sel'); };
+        [...wrap.children].forEach(x=>x.classList.remove('sel')); d.classList.add('sel');
+        if(mode!=='brush') setMode('brush'); };
       wrap.appendChild(d);
     });
   }
@@ -467,33 +521,41 @@
   document.getElementById('custom').addEventListener('input',e=>{
     curColor=e.target.value;
     [...document.getElementById('swatches').children].forEach(x=>x.classList.remove('sel'));
+    if(mode!=='brush') setMode('brush');
   });
 
   // ---------- Sliders ----------
-  document.getElementById('size').addEventListener('input',e=>{brushSize=+e.target.value; document.getElementById('sizeV').textContent=brushSize+' px';});
-  document.getElementById('cov').addEventListener('input',e=>{coverage=+e.target.value; document.getElementById('covV').textContent=coverage+' %';});
-  document.getElementById('blend').addEventListener('change',e=>{curBlend=e.target.value;});
+  const sizeEl=document.getElementById('size'), covEl=document.getElementById('cov');
+  function setSize(v){brushSize=v; sizeEl.value=v; document.getElementById('sizeV').textContent=v+' px';}
+  function setCov(v){coverage=v; covEl.value=v; document.getElementById('covV').textContent=v+' %';}
+  sizeEl.addEventListener('input',e=>setSize(+e.target.value));
+  covEl.addEventListener('input',e=>setCov(+e.target.value));
+  document.getElementById('finish').addEventListener('change',e=>{finish=e.target.value; render();});
+  document.getElementById('real').addEventListener('input',e=>{
+    realism=+e.target.value/100; document.getElementById('realV').textContent=e.target.value+' %'; render();});
+
+  // ---------- Modes ----------
+  const btns={brush:document.getElementById('modeBrush'),sponge:document.getElementById('modeSponge'),
+              erase:document.getElementById('modeErase'),pan:document.getElementById('modePan')};
+  function setMode(m){
+    mode=m; stage.classList.toggle('pan',m==='pan');
+    for(const k in btns) btns[k].classList.toggle('active',k===m);
+    document.getElementById('toolnote').innerHTML=TOOLNOTES[m]||'';
+  }
+  btns.brush.onclick=()=>setMode('brush'); btns.sponge.onclick=()=>setMode('sponge');
+  btns.erase.onclick=()=>setMode('erase'); btns.pan.onclick=()=>setMode('pan');
 
   // ---------- Boutons ----------
   document.getElementById('file').addEventListener('change',e=>{if(e.target.files[0])loadImage(e.target.files[0]);});
-  const mB=document.getElementById('modeBrush'), mP=document.getElementById('modePan');
-  function setMode(m){ mode=m; stage.classList.toggle('pan',m==='pan');
-    mB.classList.toggle('active',m==='brush'); mP.classList.toggle('active',m==='pan'); }
-  mB.onclick=()=>setMode('brush'); mP.onclick=()=>setMode('pan'); setMode('pan');
-  const erBtn=document.getElementById('eraser');
-  erBtn.onclick=()=>{ erasing=!erasing; erBtn.classList.toggle('active',erasing); if(erasing)setMode('brush'); };
   document.getElementById('undo').onclick=undo;
-  document.getElementById('clear').onclick=()=>{
-    if(!baseCanvas)return; pushUndoAll();
-    for(const b of BLEND_ORDER){ if(layers[b]) layers[b].getContext('2d').clearRect(0,0,imgW,imgH); }
-    render();
-  };
+  document.getElementById('clear').onclick=()=>{ if(!mk)return; pushUndo(); mkCtx.clearRect(0,0,imgW,imgH); render(); };
   document.getElementById('download').onclick=download;
-  document.getElementById('zin').onclick=()=>zoomAt(cssW/2+stage.getBoundingClientRect().left,cssH/2+stage.getBoundingClientRect().top,1.25);
-  document.getElementById('zout').onclick=()=>zoomAt(cssW/2+stage.getBoundingClientRect().left,cssH/2+stage.getBoundingClientRect().top,0.8);
+  const c2=()=>({x:stage.getBoundingClientRect().left+cssW/2, y:stage.getBoundingClientRect().top+cssH/2});
+  document.getElementById('zin').onclick=()=>{const c=c2();zoomAt(c.x,c.y,1.25);};
+  document.getElementById('zout').onclick=()=>{const c=c2();zoomAt(c.x,c.y,0.8);};
   document.getElementById('zfit').onclick=fitView;
 
-  // ---------- Pointeurs (peinture / pan / pinch) ----------
+  // ---------- Pointeurs ----------
   const pointers=new Map();
   let panning=false, panStart=null, pinch=null;
   canvas.addEventListener('pointerdown',e=>{
@@ -508,48 +570,41 @@
       return;
     }
     if(mode==='pan'){ panning=true; stage.classList.add('grabbing'); panStart={x:e.clientX-offX,y:e.clientY-offY}; }
-    else{ beginStroke(toImg(e.clientX,e.clientY)); }
+    else beginStroke(toImg(e.clientX,e.clientY));
   });
   canvas.addEventListener('pointermove',e=>{
     if(!pointers.has(e.pointerId))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(pinch && pointers.size>=2){
-      const p=[...pointers.values()];
+      const p=[...pointers.values()], r=canvas.getBoundingClientRect();
       const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
       const mid={x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2};
-      const r=canvas.getBoundingClientRect();
-      const f=d/pinch.d;
-      scale=Math.min(8,Math.max(0.05,pinch.scale*f));
-      // garder le point médian stable + pan
+      scale=clamp(pinch.scale*(d/pinch.d),0.05,8);
       offX=(mid.x-r.left)-((pinch.mid.x-r.left)-pinch.offX)*(scale/pinch.scale);
       offY=(mid.y-r.top)-((pinch.mid.y-r.top)-pinch.offY)*(scale/pinch.scale);
       render(); return;
     }
     if(panning){ offX=e.clientX-panStart.x; offY=e.clientY-panStart.y; render(); return; }
-    if(stroking){ paintTo(toImg(e.clientX,e.clientY)); }
+    if(stroking) moveStroke(toImg(e.clientX,e.clientY));
   });
-  function upHandler(e){
+  function up(e){
     pointers.delete(e.pointerId);
     if(pointers.size<2) pinch=null;
     if(panning){ panning=false; stage.classList.remove('grabbing'); }
     if(stroking) endStroke();
   }
-  canvas.addEventListener('pointerup',upHandler);
-  canvas.addEventListener('pointercancel',upHandler);
-  canvas.addEventListener('pointerleave',e=>{ if(stroking)endStroke(); });
+  canvas.addEventListener('pointerup',up);
+  canvas.addEventListener('pointercancel',up);
+  canvas.addEventListener('pointerleave',()=>{ if(stroking)endStroke(); });
+  stage.addEventListener('wheel',e=>{ if(!baseCanvas)return; e.preventDefault();
+    zoomAt(e.clientX,e.clientY, e.deltaY<0?1.12:0.89); },{passive:false});
 
-  stage.addEventListener('wheel',e=>{
-    if(!baseCanvas)return; e.preventDefault();
-    zoomAt(e.clientX,e.clientY, e.deltaY<0?1.12:0.89);
-  },{passive:false});
-
-  // Drag & drop
   ['dragover','drop'].forEach(ev=>stage.addEventListener(ev,e=>e.preventDefault()));
   stage.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/'))loadImage(f); });
-
   window.addEventListener('resize',resizeDisplay);
+
   // Init
-  renderSwatches(); resizeDisplay();
+  setMode('pan'); renderSwatches(); resizeDisplay();
 })();
 </script>
 </body>
