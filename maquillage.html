@@ -133,7 +133,6 @@
   <div class="spacer"></div>
   <div class="tbar">
     <label class="tool primary"><input id="file" type="file" accept="image/*" hidden>📷 Importer</label>
-    <a class="tool" href="coiffure.html" style="text-decoration:none">💇 Coiffure</a>
     <button class="tool" id="modeBrush">🖌️ Pinceau</button>
     <button class="tool" id="modeSponge">🧽 Éponge</button>
     <button class="tool" id="modeErase">✕ Gomme</button>
@@ -239,39 +238,57 @@
   ];
   const SHADES = {
     foundation:[
-      ['Porcelaine','#f0d9cf','froid'],['Ivoire','#efd3bd','neutre'],['Beige clair','#e9c9a8','chaud'],
-      ['Sable','#dcb48c','chaud'],['Doré moyen','#c99a6e','chaud'],['Ambre','#b07f56','neutre'],
-      ['Caramel','#9c6a44','chaud'],['Noisette','#8a5c42','froid'],['Cacao','#6e4530','neutre'],
-      ['Ébène','#4f3020','neutre'],
+      ['Porcelaine','#f2ddd4','froid'],['Albâtre','#f0d9cf','froid'],['Ivoire','#efd3bd','neutre'],
+      ['Vanille','#ecccae','chaud'],['Beige clair','#e9c9a8','chaud'],['Nu neutre','#e3c1a2','neutre'],
+      ['Beige rosé','#ddbaa4','froid'],['Sable','#dcb48c','chaud'],['Miel','#d3a878','chaud'],
+      ['Doré moyen','#c99a6e','chaud'],['Beige olive','#c39a72','neutre'],['Ambre','#b07f56','neutre'],
+      ['Noisette','#a67a52','chaud'],['Caramel','#9c6a44','chaud'],['Pécan','#8a5c42','froid'],
+      ['Chocolat au lait','#7a4e38','neutre'],['Cacao','#6e4530','neutre'],['Moka','#5a3928','chaud'],
+      ['Ébène','#4f3020','neutre'],['Espresso','#3c261a','froid'],
     ],
     eyes:[
-      ['Champagne','#e6c9a8','neutre'],['Taupe','#8b7466','neutre'],['Bronze doré','#a9722e','chaud'],
-      ['Cuivre','#b5561e','chaud'],['Rose vieilli','#b77b7b','froid'],['Prune','#6e3b5c','froid'],
-      ['Olive','#6b6b3a','chaud'],['Bleu nuit','#2f3e5c','froid'],['Chocolat','#5a3b2e','neutre'],
-      ['Gris fumé','#4a464c','froid'],['Terracotta','#c06a4b','chaud'],['Mauve','#8a6e9e','froid'],
+      ['Ivoire nacré','#efe0cf','froid'],['Champagne','#e6c9a8','neutre'],['Or rose','#d99f7e','chaud'],
+      ['Beige rosé','#d8b6a6','froid'],['Rose poudré','#d9a7ad','froid'],['Rose vieilli','#b77b7b','froid'],
+      ['Taupe','#8b7466','neutre'],['Lilas','#a9a0c8','froid'],['Mauve','#8a6e9e','froid'],
+      ['Ambre','#b8862f','chaud'],['Bronze doré','#a9722e','chaud'],['Cuivre','#b5561e','chaud'],
+      ['Terracotta','#c06a4b','chaud'],['Rouille','#8a3a1e','chaud'],['Olive','#6b6b3a','chaud'],
+      ['Vert forêt','#34503f','froid'],['Canard','#23575c','froid'],['Bleu nuit','#2f3e5c','froid'],
+      ['Bleu électrique','#25508f','froid'],['Prune','#6e3b5c','froid'],['Aubergine','#4a2c40','froid'],
+      ['Moka','#6f5544','neutre'],['Chocolat','#5a3b2e','neutre'],['Café','#3f2a20','neutre'],
+      ['Gris fumé','#4a464c','froid'],['Anthracite','#2c2b30','neutre'],
     ],
     liner:[
-      ['Noir','#171417','neutre'],['Brun','#3e2a22','chaud'],['Aubergine','#33223a','froid'],
-      ['Kaki','#3e3b2a','chaud'],['Marine','#202a44','froid'],
+      ['Noir','#171417','neutre'],['Brun','#3e2a22','chaud'],['Bronze','#6a4a2a','chaud'],
+      ['Kaki','#3e3b2a','chaud'],['Vert bouteille','#24402f','froid'],['Marine','#202a44','froid'],
+      ['Bleu électrique','#1f4e8c','froid'],['Aubergine','#33223a','froid'],['Prune','#4a2340','froid'],
+      ['Blanc (waterline)','#f2efe9','neutre'],
     ],
     lips:[
-      ['Nude rosé','#c58a80','froid'],['Nude pêche','#c98a6a','chaud'],['Rose vif','#c64b7b','froid'],
-      ['Corail','#e05b47','chaud'],['Rouge classique','#b11e2f','neutre'],['Rouge brique','#8e2b24','chaud'],
-      ['Framboise','#a6294f','froid'],['Prune','#6e2b44','froid'],['Mauve doux','#a96f86','froid'],
-      ['Terracotta','#b25a3e','chaud'],
+      ['Nude beige','#bf8a76','neutre'],['Nude rosé','#c58a80','froid'],['Nude pêche','#c98a6a','chaud'],
+      ['Caramel','#a86a4e','chaud'],['Rose tendre','#d68ea0','froid'],['Vieux rose','#b06a78','froid'],
+      ['Rose vif','#c64b7b','froid'],['Fuchsia','#b83a86','froid'],['Mauve doux','#a96f86','froid'],
+      ['Corail','#e05b47','chaud'],['Pêche vive','#e7795e','chaud'],['Orange brûlé','#cf5a2e','chaud'],
+      ['Rouge classique','#b11e2f','neutre'],['Rouge cerise','#a41d34','froid'],['Rouge brique','#8e2b24','chaud'],
+      ['Rouge sang','#7d1420','neutre'],['Framboise','#a6294f','froid'],['Baie','#7a2f50','froid'],
+      ['Prune','#6e2b44','froid'],['Cerise noire','#6e1f33','froid'],['Terracotta','#b25a3e','chaud'],
+      ['Chocolat','#6b4335','chaud'],
     ],
     blush:[
-      ['Pêche','#f0a57e','chaud'],['Abricot','#e8895c','chaud'],['Rose poudré','#e79ca9','froid'],
-      ['Rose froid','#d96b8c','froid'],['Corail','#f07e63','chaud'],['Mauve','#c084a0','froid'],
-      ['Terracotta','#c56a4a','neutre'],
+      ['Nude rosé','#dfa891','neutre'],['Pêche','#f0a57e','chaud'],['Abricot','#e8895c','chaud'],
+      ['Corail doux','#f0977e','chaud'],['Corail','#f07e63','chaud'],['Bronze rosé','#c98a72','chaud'],
+      ['Rose poudré','#e79ca9','froid'],['Rose froid','#d96b8c','froid'],['Rose vif','#e06f95','froid'],
+      ['Framboise','#cf5677','froid'],['Mauve','#c084a0','froid'],['Prune poudré','#a86a82','froid'],
+      ['Terracotta','#c56a4a','neutre'],['Brique','#b0553f','chaud'],
     ],
     glow:[
-      ['Champagne','#f3e1c0','neutre'],['Doré','#f0d08a','chaud'],['Rosé','#f3d4ce','froid'],
-      ['Perle','#f5eee0','froid'],['Bronze','#e4b583','chaud'],
+      ['Perle','#f5eee0','froid'],['Champagne','#f3e1c0','neutre'],['Vanille','#f0e2bf','chaud'],
+      ['Doré','#f0d08a','chaud'],['Or rose','#f2cbb4','froid'],['Rosé','#f3d4ce','froid'],
+      ['Pêche lumineuse','#f6cba0','chaud'],['Bronze','#e4b583','chaud'],['Cuivre lumineux','#e0a06e','chaud'],
     ],
     bronze:[
-      ['Bronze chaud','#a9713f','chaud'],['Contour froid','#8c6b54','froid'],
-      ['Terre','#96633c','neutre'],['Ambre','#b57a3e','chaud'],
+      ['Miel','#c08a4e','chaud'],['Ambre','#b57a3e','chaud'],['Bronze chaud','#a9713f','chaud'],
+      ['Cannelle','#9a5a34','chaud'],['Terre','#96633c','neutre'],['Moka','#6e4a34','neutre'],
+      ['Taupe froid','#7d6350','froid'],['Contour froid','#8c6b54','froid'],
     ],
   };
   const TOOLNOTES = {
