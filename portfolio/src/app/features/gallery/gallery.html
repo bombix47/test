@@ -127,17 +127,35 @@
 </dialog>
 
 <dialog #tagDialog>
-  <div class="dlg-head"><h2>Ajouter des mots-clés</h2><button type="button" class="btn ghost sm" (click)="tagDialog.close()">✕</button></div>
+  <div class="dlg-head">
+    <div>
+      <h2>Mots-clés de la sélection</h2>
+      <p class="muted small">{{ selectedIds().size }} œuvre{{ selectedIds().size > 1 ? 's' : '' }} · plein = sur toutes, pointillé = sur certaines. Cliquez pour ajouter, recliquez pour retirer.</p>
+    </div>
+    <button type="button" class="btn ghost sm" (click)="tagDialog.close()">✕</button>
+  </div>
   <div class="dlg-body">
     @for (tx of taxonomies.taxonomies(); track tx.id) {
       <div class="facet">
         <h3 [style.color]="tx.color">{{ tx.name }}</h3>
-        <app-tag-chips [tags]="taxonomies.tagsByTaxonomy().get(tx.id) ?? []" [selected]="bulkTagIds()" [color]="tx.color" [allowCreate]="true" (toggled)="toggleBulkTag($event)" (created)="createBulkTag(tx.id, $event)" />
+        <app-tag-chips
+          [tags]="taxonomies.tagsByTaxonomy().get(tx.id) ?? []"
+          [selected]="bulkOn()"
+          [partial]="bulkPartial()"
+          [hint]="bulkHint()"
+          [color]="tx.color"
+          [allowCreate]="true"
+          (toggled)="toggleBulkTag($event)"
+          (created)="createBulkTag(tx.id, $event)"
+        />
       </div>
     }
   </div>
   <div class="dlg-foot">
+    <span class="muted small summary">
+      @if (bulkSummary().add) { +{{ bulkSummary().add }} } @if (bulkSummary().remove) { −{{ bulkSummary().remove }} }
+    </span>
     <button type="button" class="btn" (click)="tagDialog.close()">Annuler</button>
-    <button type="button" class="btn primary" [disabled]="!bulkTagIds().length" (click)="applyBulkTags()">Appliquer</button>
+    <button type="button" class="btn primary" [disabled]="!bulkChanges().size" (click)="applyBulkTags()">Appliquer</button>
   </div>
 </dialog>

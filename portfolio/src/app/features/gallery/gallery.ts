@@ -41,7 +41,57 @@ export class Gallery {
   readonly collectionDialog = viewChild<ElementRef<HTMLDialogElement>>('collectionDialog');
   readonly tagDialog = viewChild<ElementRef<HTMLDialogElement>>('tagDialog');
   readonly newCollectionName = signal('');
-  readonly bulkTagIds = signal<string[]>([]);
+  /** Modifications en attente dans le dialogue de mots-clés : tagId -> ajouter / retirer. */
+  readonly bulkChanges = signal<Map<string, 'add' | 'remove'>>(new Map());
+
+  readonly selectedArtworks = computed(() => {
+    const ids = this.selectedIds();
+    return this.artworks.artworks().filter((a) => ids.has(a.id));
+  });
+
+  /** Pour chaque tag, nombre d'œuvres sélectionnées qui le portent. */
+  readonly bulkCounts = computed(() => {
+    const counts = new Map<string, number>();
+    for (const a of this.selectedArtworks()) for (const t of a.tagIds) counts.set(t, (counts.get(t) ?? 0) + 1);
+    return counts;
+  });
+
+  /** État affiché = état actuel de la sélection + modifications en attente. */
+  readonly bulkOn = computed(() => {
+    const n = this.selectedArtworks().length;
+    const changes = this.bulkChanges();
+    const on: string[] = [];
+    for (const [t, c] of this.bulkCounts()) if (c === n && changes.get(t) !== 'remove') on.push(t);
+    for (const [t, c] of changes) if (c === 'add' && !on.includes(t)) on.push(t);
+    return on;
+  });
+
+  readonly bulkPartial = computed(() => {
+    const n = this.selectedArtworks().length;
+    const changes = this.bulkChanges();
+    const partial: string[] = [];
+    for (const [t, c] of this.bulkCounts()) if (c > 0 && c < n && !changes.has(t)) partial.push(t);
+    return partial;
+  });
+
+  readonly bulkHint = computed(() => {
+    const n = this.selectedArtworks().length;
+    const counts = this.bulkCounts();
+    const changes = this.bulkChanges();
+    return (tagId: string) => {
+      const c = changes.get(tagId);
+      if (c === 'add') return 'Sera ajouté à toute la sélection';
+      if (c === 'remove') return 'Sera retiré de toute la sélection';
+      const k = counts.get(tagId) ?? 0;
+      return k ? `Présent sur ${k} œuvre${k > 1 ? 's' : ''} sur ${n}` : 'Absent de la sélection';
+    };
+  });
+
+  readonly bulkSummary = computed(() => {
+    let add = 0, remove = 0;
+    for (const c of this.bulkChanges().values()) c === 'add' ? add++ : remove++;
+    return { add, remove };
+  });
 
   constructor() {
     effect(() => this.collectionId.set(this.collection() ?? ''));
@@ -108,7 +158,12 @@ export class Gallery {
       const created = await this.artworks.importFiles(files);
       if (this.collectionId() && created.length) await this.collections.addArtworks(this.collectionId(), created.map((a) => a.id));
       if (created.length === 1) this.router.navigate(['/oeuvre', created[0].id]);
-      else this.showToast(`${created.length} œuvres importées`);
+      else {
+        // Import multiple : on pré-sélectionne les nouvelles œuvres pour l'étiquetage de masse.
+        this.selecting.set(true);
+        this.selectedIds.set(new Set(created.map((a) => a.id)));
+        this.showToast(`${created.length} œuvres importées et sélectionnées`);
+      }
     } catch (err) {
       console.error(err);
       this.showToast("Échec de l'import");
@@ -157,24 +212,34 @@ export class Gallery {
   }
 
   openTagDialog() {
-    this.bulkTagIds.set([]);
+    this.bulkChanges.set(new Map());
     this.tagDialog()?.nativeElement.showModal();
   }
 
+  /** Cycle : absent/partiel -> ajouter ; présent partout -> retirer ; modification en attente -> annuler. */
   toggleBulkTag(id: string) {
-    this.bulkTagIds.update((l) => (l.includes(id) ? l.filter((t) => t !== id) : [...l, id]));
+    this.bulkChanges.update((m) => {
+      const next = new Map(m);
+      if (next.has(id)) next.delete(id);
+      else {
+        const n = this.selectedArtworks().length;
+        next.set(id, (this.bulkCounts().get(id) ?? 0) === n ? 'remove' : 'add');
+      }
+      return next;
+    });
   }
 
   async createBulkTag(taxonomyId: string, name: string) {
     const tag = await this.taxonomies.addTag(taxonomyId, name);
-    if (!this.bulkTagIds().includes(tag.id)) this.bulkTagIds.update((l) => [...l, tag.id]);
+    this.bulkChanges.update((m) => new Map(m).set(tag.id, 'add'));
   }
 
   async applyBulkTags() {
-    await this.artworks.addTagsToMany([...this.selectedIds()], this.bulkTagIds());
+    const add: string[] = [], remove: string[] = [];
+    for (const [t, c] of this.bulkChanges()) (c === 'add' ? add : remove).push(t);
+    const n = await this.artworks.applyTagsToMany([...this.selectedIds()], add, remove);
     this.tagDialog()?.nativeElement.close();
-    this.showToast('Mots-clés ajoutés');
-    this.toggleSelecting();
+    this.showToast(n ? `${n} œuvre${n > 1 ? 's' : ''} mise${n > 1 ? 's' : ''} à jour` : 'Aucun changement');
   }
 
   async deleteSelection() {

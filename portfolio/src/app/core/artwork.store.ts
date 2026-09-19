@@ -77,13 +77,22 @@ export class ArtworkStore {
     await this.update(id, { tagIds });
   }
 
-  async addTagsToMany(ids: string[], tagIds: string[]) {
+  /** Édition de masse : ajoute et/ou retire des mots-clés sur plusieurs œuvres en une transaction. */
+  async applyTagsToMany(ids: string[], add: string[], remove: string[]) {
+    const rm = new Set(remove);
+    const now = Date.now();
+    const updated = new Map<string, Artwork>();
     for (const id of ids) {
       const a = this.byId().get(id);
       if (!a) continue;
-      const merged = Array.from(new Set([...a.tagIds, ...tagIds]));
-      await this.update(id, { tagIds: merged });
+      const tagIds = Array.from(new Set([...a.tagIds.filter((t) => !rm.has(t)), ...add]));
+      if (tagIds.length === a.tagIds.length && tagIds.every((t) => a.tagIds.includes(t))) continue;
+      updated.set(id, { ...a, tagIds, updatedAt: now });
     }
+    if (!updated.size) return 0;
+    await db.artworks.bulkPut([...updated.values()]);
+    this.artworks.update((l) => l.map((a) => updated.get(a.id) ?? a));
+    return updated.size;
   }
 
   async replaceImage(id: string, file: File) {
