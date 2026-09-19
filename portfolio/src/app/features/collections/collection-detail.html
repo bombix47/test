@@ -1,0 +1,81 @@
+@if (collection(); as c) {
+  <div class="page-head no-print">
+    <a routerLink="/collections" class="btn ghost">← Collections</a>
+    <div class="actions">
+      <a class="btn" [routerLink]="['/']" [queryParams]="{ collection: c.id }">Filtrer la galerie</a>
+      <button type="button" class="btn" (click)="view.set(view() === 'grid' ? 'list' : 'grid')">{{ view() === 'grid' ? '☰ Liste' : '▦ Grille' }}</button>
+      <button type="button" class="btn" (click)="print()">Imprimer</button>
+      <button type="button" class="btn danger" (click)="remove()">Supprimer</button>
+    </div>
+  </div>
+
+  <header class="head">
+    <input class="title" type="text" [value]="c.name" (change)="patch('name', $event)" aria-label="Nom de la collection" />
+    <textarea class="desc" [value]="c.description" (change)="patch('description', $event)" placeholder="Description, lieu, dates de l'exposition…"></textarea>
+    <p class="muted small">{{ items().length }} œuvre{{ items().length > 1 ? 's' : '' }} · glissez-déposez pour ordonner</p>
+  </header>
+
+  <div class="row no-print" style="margin-bottom: 1rem">
+    <button type="button" class="btn primary" (click)="openAdd()">＋ Ajouter des œuvres</button>
+  </div>
+
+  @if (!items().length) {
+    <div class="empty">Cette collection est vide.</div>
+  } @else if (view() === 'grid') {
+    <div class="grid" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="drop($event)">
+      @for (a of items(); track a.id; let i = $index) {
+        <div class="tile drag" cdkDrag>
+          <img [src]="artworks.thumbUrl(a)" [alt]="a.title" />
+          <span class="num">{{ i + 1 }}</span>
+          <a class="open" [routerLink]="['/oeuvre', a.id]" title="Ouvrir">↗</a>
+          <button type="button" class="rm" (click)="removeArtwork(a.id)" title="Retirer de la collection">✕</button>
+          <span class="caption">{{ a.title }}</span>
+        </div>
+      }
+    </div>
+  } @else {
+    <ol class="list" cdkDropList (cdkDropListDropped)="drop($event)">
+      @for (a of items(); track a.id; let i = $index) {
+        <li class="card item" cdkDrag>
+          <span class="num">{{ i + 1 }}</span>
+          <img [src]="artworks.thumbUrl(a)" [alt]="a.title" />
+          <div class="txt">
+            <a [routerLink]="['/oeuvre', a.id]"><strong>{{ a.title }}</strong></a>
+            <span class="muted small">@if (a.year) { {{ a.year }} } @if (a.dimensions) { · {{ a.dimensions }} }</span>
+            <app-tag-list [tagIds]="a.tagIds" />
+          </div>
+          <div class="ctl no-print">
+            <button type="button" class="btn sm ghost" (click)="move(i, -1)" [disabled]="i === 0">↑</button>
+            <button type="button" class="btn sm ghost" (click)="move(i, 1)" [disabled]="i === items().length - 1">↓</button>
+            <button type="button" class="btn sm ghost danger" (click)="removeArtwork(a.id)">✕</button>
+          </div>
+        </li>
+      }
+    </ol>
+  }
+
+  <dialog #addDialog>
+    <div class="dlg-head"><h2>Ajouter des œuvres</h2><button type="button" class="btn ghost sm" (click)="addDialog.close()">✕</button></div>
+    <div class="dlg-body">
+      <input type="search" placeholder="Rechercher…" [value]="pickQuery()" (input)="pickQuery.set($any($event.target).value)" />
+      @if (!candidates().length) {
+        <p class="muted">Toutes les œuvres sont déjà dans cette collection.</p>
+      }
+      <div class="grid pick">
+        @for (a of candidates(); track a.id) {
+          <button type="button" class="tile" [class.selected]="picked().has(a.id)" (click)="togglePick(a.id)">
+            <img [src]="artworks.thumbUrl(a)" [alt]="a.title" loading="lazy" />
+            <span class="check">{{ picked().has(a.id) ? '✓' : '' }}</span>
+            <span class="caption">{{ a.title }}</span>
+          </button>
+        }
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" (click)="addDialog.close()">Annuler</button>
+      <button type="button" class="btn primary" [disabled]="!picked().size" (click)="confirmAdd()">Ajouter ({{ picked().size }})</button>
+    </div>
+  </dialog>
+} @else {
+  <div class="empty">Collection introuvable. <a routerLink="/collections">Retour</a></div>
+}

@@ -1,0 +1,131 @@
+<div class="page-head">
+  <div>
+    <h1>Galerie</h1>
+    <p class="muted small">
+      {{ filtered().length }} œuvre{{ filtered().length > 1 ? 's' : '' }}
+      @if (hasFilters()) { sur {{ artworks.artworks().length }} }
+    </p>
+  </div>
+  <div class="actions">
+    <label class="btn primary">
+      <span>＋ Importer</span>
+      <input type="file" accept="image/*" multiple hidden (change)="onFiles($event)" />
+    </label>
+    <label class="btn">
+      <span>📷 Photo</span>
+      <input type="file" accept="image/*" capture="environment" hidden (change)="onFiles($event)" />
+    </label>
+    <button type="button" class="btn" [class.primary]="selecting()" (click)="toggleSelecting()" [disabled]="!artworks.artworks().length">
+      {{ selecting() ? 'Annuler' : 'Sélectionner' }}
+    </button>
+  </div>
+</div>
+
+<section class="filters card">
+  <div class="filters-top">
+    <input type="search" placeholder="Rechercher un titre, un mot-clé…" [value]="query()" (input)="query.set($any($event.target).value)" />
+    <select [value]="sort()" (change)="sort.set($any($event.target).value)" aria-label="Tri">
+      <option value="recent">Plus récentes</option>
+      <option value="title">Titre A→Z</option>
+      <option value="year">Année</option>
+    </select>
+    <button type="button" class="btn" (click)="filtersOpen.set(!filtersOpen())">
+      Filtres @if (selectedTagIds().length) { <strong>({{ selectedTagIds().length }})</strong> }
+    </button>
+    @if (hasFilters()) {
+      <button type="button" class="btn ghost" (click)="clearFilters()">Effacer</button>
+    }
+  </div>
+
+  @if (filtersOpen()) {
+    <div class="facets">
+      @if (collections.collections().length) {
+        <div class="facet">
+          <h3>Collection</h3>
+          <select [value]="collectionId()" (change)="collectionId.set($any($event.target).value)">
+            <option value="">Toutes les œuvres</option>
+            @for (c of collections.collections(); track c.id) {
+              <option [value]="c.id">{{ c.name }} ({{ c.artworkIds.length }})</option>
+            }
+          </select>
+        </div>
+      }
+      @for (tx of taxonomies.taxonomies(); track tx.id) {
+        <div class="facet">
+          <h3 [style.color]="tx.color">{{ tx.name }}</h3>
+          <app-tag-chips [tags]="taxonomies.tagsByTaxonomy().get(tx.id) ?? []" [selected]="selectedTagIds()" [color]="tx.color" (toggled)="toggleTagFilter($event)" />
+        </div>
+      }
+    </div>
+  }
+</section>
+
+@if (selecting()) {
+  <div class="bulk card">
+    <span><strong>{{ selectedIds().size }}</strong> sélectionnée{{ selectedIds().size > 1 ? 's' : '' }}</span>
+    <button type="button" class="btn sm ghost" (click)="selectAll()">Tout</button>
+    <span class="spacer"></span>
+    <button type="button" class="btn sm" [disabled]="!selectedIds().size" (click)="openCollectionDialog()">▤ Collection</button>
+    <button type="button" class="btn sm" [disabled]="!selectedIds().size" (click)="openTagDialog()">＃ Mots-clés</button>
+    <button type="button" class="btn sm danger" [disabled]="!selectedIds().size" (click)="deleteSelection()">Supprimer</button>
+  </div>
+}
+
+@if (importing()) {
+  <div class="toast">{{ importing() }}</div>
+}
+@if (toast()) {
+  <div class="toast">{{ toast() }}</div>
+}
+
+@if (!artworks.artworks().length) {
+  <div class="empty">
+    <p>Aucune œuvre pour l'instant.</p>
+    <p class="small">Importez des images ou prenez une photo pour commencer.</p>
+  </div>
+} @else if (!filtered().length) {
+  <div class="empty">Aucune œuvre ne correspond aux filtres.</div>
+} @else {
+  <div class="grid">
+    @for (a of filtered(); track a.id) {
+      <a class="tile" [class.selected]="selectedIds().has(a.id)" [routerLink]="selecting() ? null : ['/oeuvre', a.id]" (click)="onTileClick(a, $event)">
+        <img [src]="artworks.thumbUrl(a)" [alt]="a.title" loading="lazy" />
+        @if (selecting()) { <span class="check">{{ selectedIds().has(a.id) ? '✓' : '' }}</span> }
+        <span class="caption">{{ a.title }}@if (a.year) { · {{ a.year }} }</span>
+      </a>
+    }
+  </div>
+}
+
+<dialog #collectionDialog>
+  <div class="dlg-head"><h2>Ajouter à une collection</h2><button type="button" class="btn ghost sm" (click)="collectionDialog.close()">✕</button></div>
+  <div class="dlg-body">
+    @for (c of collections.collections(); track c.id) {
+      <button type="button" class="btn list-item" (click)="addSelectionTo(c.id)">
+        <span>{{ c.name }}</span><span class="muted small">{{ c.artworkIds.length }}</span>
+      </button>
+    } @empty {
+      <p class="muted">Aucune collection. Créez-en une ci-dessous.</p>
+    }
+    <form class="row" (submit)="$event.preventDefault(); createAndAdd()">
+      <input type="text" placeholder="Nouvelle collection…" [value]="newCollectionName()" (input)="newCollectionName.set($any($event.target).value)" />
+      <button type="submit" class="btn primary" [disabled]="!newCollectionName().trim()">Créer</button>
+    </form>
+  </div>
+</dialog>
+
+<dialog #tagDialog>
+  <div class="dlg-head"><h2>Ajouter des mots-clés</h2><button type="button" class="btn ghost sm" (click)="tagDialog.close()">✕</button></div>
+  <div class="dlg-body">
+    @for (tx of taxonomies.taxonomies(); track tx.id) {
+      <div class="facet">
+        <h3 [style.color]="tx.color">{{ tx.name }}</h3>
+        <app-tag-chips [tags]="taxonomies.tagsByTaxonomy().get(tx.id) ?? []" [selected]="bulkTagIds()" [color]="tx.color" [allowCreate]="true" (toggled)="toggleBulkTag($event)" (created)="createBulkTag(tx.id, $event)" />
+      </div>
+    }
+  </div>
+  <div class="dlg-foot">
+    <button type="button" class="btn" (click)="tagDialog.close()">Annuler</button>
+    <button type="button" class="btn primary" [disabled]="!bulkTagIds().length" (click)="applyBulkTags()">Appliquer</button>
+  </div>
+</dialog>

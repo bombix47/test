@@ -1,0 +1,23 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);
+  gap: 1.25rem;
+  align-items: start;
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+.viewer {
+  margin: 0;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  position: sticky;
+  top: 72px;
+  @media (max-width: 900px) { position: static; }
+  img { max-width: 100%; max-height: min(75dvh, 900px); object-fit: contain; border-radius: 6px; }
+  .blur { filter: blur(6px); }
+}
+.meta .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.new input { width: 11rem; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.875rem; }
+a.disabled { pointer-events: none; opacity: 0.35; }

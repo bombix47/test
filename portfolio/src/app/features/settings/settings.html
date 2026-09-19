@@ -1,0 +1,58 @@
+<div class="page-head">
+  <h1>Réglages</h1>
+</div>
+
+<section class="stack">
+  <div class="card block">
+    <h2>Taxonomies et mots-clés</h2>
+    <p class="muted small">Chaque taxonomie est un axe de classement indépendant (technique, sujet, thème…). Les mots-clés créés depuis une fiche d'œuvre apparaissent ici.</p>
+
+    @for (tx of taxonomies.taxonomies(); track tx.id) {
+      <div class="tax">
+        <div class="tax-head">
+          <input type="color" [value]="tx.color" (change)="patchTaxonomy(tx.id, 'color', $event)" aria-label="Couleur" />
+          <input type="text" class="tax-name" [value]="tx.name" (change)="patchTaxonomy(tx.id, 'name', $event)" aria-label="Nom de la taxonomie" />
+          <button type="button" class="btn sm ghost danger" (click)="removeTaxonomy(tx.id, tx.name)">Supprimer</button>
+        </div>
+        <ul class="tags">
+          @for (tag of taxonomies.tagsByTaxonomy().get(tx.id) ?? []; track tag.id) {
+            <li>
+              <span class="dot" [style.background]="tx.color"></span>
+              <input type="text" [value]="tag.name" (change)="renameTag(tag.id, $event)" aria-label="Nom du mot-clé" />
+              <span class="muted small count">{{ usage(tag.id) }}</span>
+              <button type="button" class="btn sm ghost" (click)="removeTag(tag.id, tag.name)" title="Supprimer">✕</button>
+            </li>
+          }
+        </ul>
+        <form class="row" (submit)="addTag(tx.id, $event)">
+          <input type="text" placeholder="Nouveau mot-clé…" />
+          <button type="submit" class="btn sm">Ajouter</button>
+        </form>
+      </div>
+    }
+
+    <form class="row add-tax" (submit)="addTaxonomy($event)">
+      <input type="text" placeholder="Nouvelle taxonomie (ex. Format, Série, Statut…)" [value]="newTaxonomy()" (input)="newTaxonomy.set($any($event.target).value)" />
+      <button type="submit" class="btn primary" [disabled]="!newTaxonomy().trim()">Créer</button>
+    </form>
+  </div>
+
+  <div class="card block">
+    <h2>Sauvegarde</h2>
+    <p class="muted small">
+      Les données sont stockées localement dans ce navigateur (IndexedDB). Exportez régulièrement une sauvegarde, et utilisez-la pour transférer votre portfolio sur un autre appareil.
+    </p>
+    <div class="row">
+      <button type="button" class="btn primary" (click)="exportAll()" [disabled]="!!busy()">Exporter (JSON)</button>
+      <label class="btn">
+        Importer une sauvegarde
+        <input type="file" accept="application/json,.json" hidden (change)="importAll($event)" />
+      </label>
+      @if (busy()) { <span class="muted small">{{ busy() }}</span> }
+    </div>
+    <p class="muted small">
+      {{ artworks.artworks().length }} œuvres · {{ collections.collections().length }} collections · {{ taxonomies.tags().length }} mots-clés
+      @if (storage(); as s) { · {{ fmt(s.usage) }} utilisés sur {{ fmt(s.quota) }} disponibles }
+    </p>
+  </div>
+</section>

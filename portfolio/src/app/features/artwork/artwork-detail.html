@@ -1,0 +1,70 @@
+@if (artwork(); as a) {
+  <div class="page-head">
+    <div class="row">
+      <a routerLink="/" class="btn ghost">← Galerie</a>
+      @if (saved()) { <span class="muted small">Enregistré ✓</span> }
+    </div>
+    <div class="actions">
+      <a class="btn ghost" [routerLink]="neighbors().prev ? ['/oeuvre', neighbors().prev!.id] : null" [class.disabled]="!neighbors().prev">‹</a>
+      <a class="btn ghost" [routerLink]="neighbors().next ? ['/oeuvre', neighbors().next!.id] : null" [class.disabled]="!neighbors().next">›</a>
+      <label class="btn">
+        Remplacer l'image
+        <input type="file" accept="image/*" hidden (change)="replaceImage($event)" />
+      </label>
+      <button type="button" class="btn danger" (click)="remove()">Supprimer</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <figure class="viewer card">
+      @if (imageUrl()) {
+        <img [src]="imageUrl()" [alt]="a.title" />
+      } @else {
+        <img [src]="artworks.thumbUrl(a)" [alt]="a.title" class="blur" />
+      }
+      <figcaption class="muted small">{{ a.width }} × {{ a.height }} px</figcaption>
+    </figure>
+
+    <div class="stack meta">
+      <div class="field">
+        <label for="title">Titre</label>
+        <input id="title" type="text" [value]="a.title" (change)="patch('title', $event)" />
+      </div>
+      <div class="two">
+        <div class="field">
+          <label for="year">Année</label>
+          <input id="year" type="number" [value]="a.year ?? ''" (change)="patchYear($event)" min="1000" max="2999" />
+        </div>
+        <div class="field">
+          <label for="dim">Dimensions</label>
+          <input id="dim" type="text" [value]="a.dimensions" (change)="patch('dimensions', $event)" placeholder="ex. 60 × 80 cm" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="desc">Description</label>
+        <textarea id="desc" [value]="a.description" (change)="patch('description', $event)"></textarea>
+      </div>
+
+      @for (tx of taxonomies.taxonomies(); track tx.id) {
+        <div class="field">
+          <label [style.color]="tx.color">{{ tx.name }}</label>
+          <app-tag-chips [tags]="taxonomies.tagsByTaxonomy().get(tx.id) ?? []" [selected]="a.tagIds" [color]="tx.color" [allowCreate]="true" (toggled)="toggleTag($event)" (created)="createTag(tx.id, $event)" />
+        </div>
+      }
+
+      <div class="field">
+        <label>Collections</label>
+        <div class="chips">
+          @for (c of collections.collections(); track c.id) {
+            <button type="button" class="chip" [class.on]="c.artworkIds.includes(a.id)" style="--chip: var(--ink)" (click)="toggleCollection(c.id)">{{ c.name }}</button>
+          }
+          <form class="new" (submit)="createCollection($event)">
+            <input type="text" placeholder="+ nouvelle collection" aria-label="Nouvelle collection" />
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="empty">Œuvre introuvable. <a routerLink="/">Retour à la galerie</a></div>
+}

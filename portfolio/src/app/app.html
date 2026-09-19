@@ -1,0 +1,17 @@
+<nav class="nav">
+  <a class="brand" routerLink="/">Atelier</a>
+  <div class="links">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <span class="ico">▦</span><span>Galerie</span>
+    </a>
+    <a routerLink="/collections" routerLinkActive="active">
+      <span class="ico">▤</span><span>Collections</span>
+    </a>
+    <a routerLink="/reglages" routerLinkActive="active">
+      <span class="ico">⚙</span><span>Réglages</span>
+    </a>
+  </div>
+</nav>
+<main class="main">
+  <router-outlet />
+</main>

@@ -1,0 +1,40 @@
+.filters { padding: 0.75rem; margin-bottom: 1rem; }
+.filters-top {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  input[type='search'] { flex: 1 1 200px; }
+  select { width: auto; }
+}
+.facets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+.facet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  h3 { font-size: 0.8rem; font-family: var(--font); text-transform: uppercase; letter-spacing: 0.06em; }
+  select { width: auto; }
+}
+.bulk {
+  position: sticky;
+  top: 64px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  .spacer { flex: 1; }
+}
+.list-item { width: 100%; justify-content: space-between; }
+@media (max-width: 640px) {
+  .filters-top { flex-wrap: wrap; select { flex: 1; } }
+  .bulk { top: 60px; }
+}
