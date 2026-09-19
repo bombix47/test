@@ -64,7 +64,7 @@ export class BackupService {
     const images: { id: string; blob: Blob }[] = [];
     for (const a of backup.artworks) {
       const { thumb, image, ...rest } = a;
-      artworks.push({ ...rest, thumb: await dataUrlToBlob(thumb) });
+      artworks.push({ ...rest, status: rest.status ?? 'available', price: rest.price ?? null, thumb: await dataUrlToBlob(thumb) });
       images.push({ id: a.id, blob: await dataUrlToBlob(image) });
     }
 

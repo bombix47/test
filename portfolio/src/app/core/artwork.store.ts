@@ -4,7 +4,7 @@ import { Artwork, uid } from './models';
 import { ImageService } from './image.service';
 import { CollectionStore } from './collection.store';
 
-export type ArtworkPatch = Partial<Pick<Artwork, 'title' | 'description' | 'year' | 'dimensions' | 'tagIds'>>;
+export type ArtworkPatch = Partial<Pick<Artwork, 'title' | 'description' | 'year' | 'dimensions' | 'tagIds' | 'status' | 'price'>>;
 
 @Injectable({ providedIn: 'root' })
 export class ArtworkStore {
@@ -19,7 +19,8 @@ export class ArtworkStore {
 
   async load() {
     const list = await db.artworks.orderBy('createdAt').reverse().toArray();
-    this.artworks.set(list);
+    // Filet de sécurité pour d'anciens enregistrements sans statut/prix.
+    this.artworks.set(list.map((a) => ({ ...a, status: a.status ?? 'available', price: a.price ?? null })));
   }
 
   thumbUrl(a: Artwork): string {
@@ -47,6 +48,8 @@ export class ArtworkStore {
         description: '',
         year: null,
         dimensions: '',
+        status: 'available',
+        price: null,
         tagIds: [...tagIds],
         thumb,
         width,

@@ -7,7 +7,8 @@ Application web (PWA) pour gérer un portfolio d'œuvres : import ou prise de ph
 - **Galerie** : grille d'œuvres, recherche plein texte, tri (récentes / titre / année).
 - **Import** : sélection multiple d'images ou prise de photo directe (mobile, `capture="environment"`). Les images sont redimensionnées (2048 px max) et une vignette est générée côté client ; l'orientation EXIF est respectée.
 - **Taxonomies de mots-clés** : chaque taxonomie est un axe indépendant. Quatre sont fournies au premier lancement (Technique, Sujet, Thème, Support) ; on peut en créer d'autres (Format, Série, Statut…) et créer des mots-clés à la volée depuis la fiche d'une œuvre.
-- **Filtres facettés** : OU entre mots-clés d'une même taxonomie, ET entre taxonomies. Filtre par collection aussi.
+- **Statut et prix** : statut unique par œuvre (Disponible, Vendu, Donné, Perso) affiché en pastille sur la vignette, prix optionnel en euros. Filtre par statut, tri par prix.
+- **Filtres facettés** : OU entre mots-clés d'une même taxonomie, ET entre taxonomies. Filtre par statut et par collection aussi.
 - **Sélection multiple** dans la galerie : ajout à une collection, ajout de mots-clés en masse, suppression.
 - **Collections** : une œuvre peut appartenir à plusieurs collections. Ordre libre par glisser-déposer (grille ou liste), vue liste imprimable pour un dossier d'expo.
 - **Sauvegarde** : export / import JSON complet (images incluses en base64) pour transférer le portfolio sur un autre appareil.

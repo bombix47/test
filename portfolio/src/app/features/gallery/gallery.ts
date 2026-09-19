@@ -3,15 +3,17 @@ import { Router, RouterLink } from '@angular/router';
 import { ArtworkStore } from '../../core/artwork.store';
 import { CollectionStore } from '../../core/collection.store';
 import { TaxonomyStore } from '../../core/taxonomy.store';
-import { Artwork } from '../../core/models';
+import { Artwork, ArtworkStatus, STATUSES, statusLabel } from '../../core/models';
 import { TagChips } from '../../shared/tag-chips';
 import { TagList } from '../../shared/tag-list';
+import { StatusBadge } from '../../shared/status-badge';
+import { PricePipe } from '../../shared/price.pipe';
 
-type Sort = 'recent' | 'title' | 'year';
+type Sort = 'recent' | 'title' | 'year' | 'price';
 
 @Component({
   selector: 'app-gallery',
-  imports: [RouterLink, TagChips, TagList],
+  imports: [RouterLink, TagChips, TagList, StatusBadge, PricePipe],
   templateUrl: './gallery.html',
   styleUrl: './gallery.scss',
 })
@@ -26,6 +28,8 @@ export class Gallery {
 
   readonly query = signal('');
   readonly selectedTagIds = signal<string[]>([]);
+  readonly selectedStatuses = signal<ArtworkStatus[]>([]);
+  readonly statuses = STATUSES;
   readonly collectionId = signal<string>('');
   readonly sort = signal<Sort>('recent');
   readonly filtersOpen = signal(false);
@@ -97,7 +101,7 @@ export class Gallery {
     effect(() => this.collectionId.set(this.collection() ?? ''));
   }
 
-  readonly hasFilters = computed(() => !!this.query() || this.selectedTagIds().length > 0 || !!this.collectionId());
+  readonly hasFilters = computed(() => !!this.query() || this.selectedTagIds().length > 0 || this.selectedStatuses().length > 0 || !!this.collectionId());
 
   readonly filtered = computed<Artwork[]>(() => {
     const q = this.query().trim().toLowerCase();
@@ -119,14 +123,17 @@ export class Gallery {
     if (q) {
       list = list.filter((a) => {
         const tagNames = a.tagIds.map((t) => tagById.get(t)?.name.toLowerCase() ?? '');
-        return a.title.toLowerCase().includes(q) || a.description.toLowerCase().includes(q) || String(a.year ?? '').includes(q) || tagNames.some((n) => n.includes(q));
+        return a.title.toLowerCase().includes(q) || a.description.toLowerCase().includes(q) || String(a.year ?? '').includes(q) || statusLabel(a.status).toLowerCase().includes(q) || tagNames.some((n) => n.includes(q));
       });
     }
+    const statuses = this.selectedStatuses();
+    if (statuses.length) list = list.filter((a) => statuses.includes(a.status));
     for (const ids of byTaxonomy.values()) list = list.filter((a) => ids.some((t) => a.tagIds.includes(t)));
 
     const sort = this.sort();
     if (sort === 'title') list = [...list].sort((a, b) => a.title.localeCompare(b.title, 'fr'));
     else if (sort === 'year') list = [...list].sort((a, b) => (b.year ?? -1) - (a.year ?? -1) || b.createdAt - a.createdAt);
+    else if (sort === 'price') list = [...list].sort((a, b) => (b.price ?? -1) - (a.price ?? -1) || b.createdAt - a.createdAt);
     else if (!col) list = [...list].sort((a, b) => b.createdAt - a.createdAt);
     return list;
   });
@@ -136,6 +143,10 @@ export class Gallery {
     localStorage.setItem('gallery.showTags', this.showTags() ? '1' : '0');
   }
 
+  toggleStatusFilter(st: ArtworkStatus) {
+    this.selectedStatuses.update((l) => (l.includes(st) ? l.filter((x) => x !== st) : [...l, st]));
+  }
+
   toggleTagFilter(id: string) {
     this.selectedTagIds.update((l) => (l.includes(id) ? l.filter((t) => t !== id) : [...l, id]));
   }
@@ -143,6 +154,7 @@ export class Gallery {
   clearFilters() {
     this.query.set('');
     this.selectedTagIds.set([]);
+    this.selectedStatuses.set([]);
     this.collectionId.set('');
     if (this.collection()) this.router.navigate([], { queryParams: {} });
   }

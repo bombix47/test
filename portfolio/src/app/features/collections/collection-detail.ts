@@ -5,10 +5,12 @@ import { ArtworkStore } from '../../core/artwork.store';
 import { CollectionStore } from '../../core/collection.store';
 import { Artwork } from '../../core/models';
 import { TagList } from '../../shared/tag-list';
+import { StatusBadge } from '../../shared/status-badge';
+import { PricePipe } from '../../shared/price.pipe';
 
 @Component({
   selector: 'app-collection-detail',
-  imports: [RouterLink, CdkDropList, CdkDrag, TagList],
+  imports: [RouterLink, CdkDropList, CdkDrag, TagList, StatusBadge, PricePipe],
   templateUrl: './collection-detail.html',
   styleUrl: './collection-detail.scss',
 })

@@ -27,6 +27,7 @@
         <div class="tile drag" cdkDrag>
           <img [src]="artworks.thumbUrl(a)" [alt]="a.title" />
           <span class="num">{{ i + 1 }}</span>
+          <app-status-badge class="status" [status]="a.status" />
           <a class="open" [routerLink]="['/oeuvre', a.id]" title="Ouvrir">↗</a>
           <button type="button" class="rm" (click)="removeArtwork(a.id)" title="Retirer de la collection">✕</button>
           <span class="caption">{{ a.title }}</span>
@@ -41,7 +42,7 @@
           <img [src]="artworks.thumbUrl(a)" [alt]="a.title" />
           <div class="txt">
             <a [routerLink]="['/oeuvre', a.id]"><strong>{{ a.title }}</strong></a>
-            <span class="muted small">@if (a.year) { {{ a.year }} } @if (a.dimensions) { · {{ a.dimensions }} }</span>
+            <span class="muted small">@if (a.year) { {{ a.year }} } @if (a.dimensions) { · {{ a.dimensions }} } @if (a.price != null) { · {{ a.price | price }} } <app-status-badge [status]="a.status" /></span>
             <app-tag-list [tagIds]="a.tagIds" />
           </div>
           <div class="ctl no-print">

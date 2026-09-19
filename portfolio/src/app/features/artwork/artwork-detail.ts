@@ -4,6 +4,7 @@ import { ArtworkStore } from '../../core/artwork.store';
 import { CollectionStore } from '../../core/collection.store';
 import { TaxonomyStore } from '../../core/taxonomy.store';
 import { TagChips } from '../../shared/tag-chips';
+import { ArtworkStatus, STATUSES } from '../../core/models';
 
 @Component({
   selector: 'app-artwork-detail',
@@ -21,6 +22,7 @@ export class ArtworkDetail {
   readonly artwork = computed(() => this.artworks.byId().get(this.id()));
 
   readonly imageUrl = signal<string | null>(null);
+  readonly statuses = STATUSES;
   readonly saved = signal(false);
 
   /** Navigation précédent / suivant dans l'ordre de la galerie (plus récentes d'abord). */
@@ -54,6 +56,18 @@ export class ArtworkDetail {
   async patch(field: 'title' | 'description' | 'dimensions', e: Event) {
     const value = (e.target as HTMLInputElement).value;
     await this.artworks.update(this.id(), { [field]: value });
+    this.flashSaved();
+  }
+
+  async setStatus(status: ArtworkStatus) {
+    await this.artworks.update(this.id(), { status });
+    this.flashSaved();
+  }
+
+  async patchPrice(e: Event) {
+    const raw = (e.target as HTMLInputElement).value.replace(',', '.');
+    const price = raw ? Number(raw) : null;
+    await this.artworks.update(this.id(), { price: price != null && Number.isFinite(price) && price >= 0 ? price : null });
     this.flashSaved();
   }
 

@@ -17,6 +17,18 @@ export class PortfolioDb extends Dexie {
       tags: 'id, taxonomyId',
       collections: 'id, createdAt',
     });
+    // v2 : statut + prix
+    this.version(2)
+      .stores({})
+      .upgrade((tx) =>
+        tx
+          .table('artworks')
+          .toCollection()
+          .modify((a: Partial<Artwork>) => {
+            a.status ??= 'available';
+            a.price ??= null;
+          }),
+      );
   }
 }
 

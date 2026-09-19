@@ -40,6 +40,20 @@
           <input id="dim" type="text" [value]="a.dimensions" (change)="patch('dimensions', $event)" placeholder="ex. 60 × 80 cm" />
         </div>
       </div>
+      <div class="two">
+        <div class="field">
+          <label>Statut</label>
+          <div class="chips">
+            @for (st of statuses; track st.value) {
+              <button type="button" class="chip" [class.on]="a.status === st.value" [style.--chip]="st.color" (click)="setStatus(st.value)">{{ st.label }}</button>
+            }
+          </div>
+        </div>
+        <div class="field">
+          <label for="price">Prix (€)</label>
+          <input id="price" type="number" inputmode="decimal" min="0" step="1" [value]="a.price ?? ''" (change)="patchPrice($event)" placeholder="—" />
+        </div>
+      </div>
       <div class="field">
         <label for="desc">Description</label>
         <textarea id="desc" [value]="a.description" (change)="patch('description', $event)"></textarea>

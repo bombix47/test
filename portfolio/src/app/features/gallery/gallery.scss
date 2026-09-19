@@ -65,8 +65,11 @@
     position: absolute; top: 0.5rem; left: 0.5rem; width: 24px; height: 24px; border-radius: 50%;
     border: 2px solid #fff; background: rgba(0, 0, 0, 0.35); display: grid; place-items: center; color: #fff; font-size: 0.8rem;
   }
+  .status { position: absolute; top: 0.5rem; right: 0.5rem; }
   .body { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.5rem 0.6rem 0.6rem; }
+  .line { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; min-width: 0; }
   .title { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .price { font-size: 0.85rem; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
   .none { font-size: 0.72rem; }
 }
 .summary { flex: 1; }

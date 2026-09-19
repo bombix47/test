@@ -28,9 +28,10 @@
       <option value="recent">Plus récentes</option>
       <option value="title">Titre A→Z</option>
       <option value="year">Année</option>
+      <option value="price">Prix</option>
     </select>
     <button type="button" class="btn" (click)="filtersOpen.set(!filtersOpen())">
-      Filtres @if (selectedTagIds().length) { <strong>({{ selectedTagIds().length }})</strong> }
+      Filtres @if (selectedTagIds().length + selectedStatuses().length; as n) { <strong>({{ n }})</strong> }
     </button>
     @if (hasFilters()) {
       <button type="button" class="btn ghost" (click)="clearFilters()">Effacer</button>
@@ -51,6 +52,14 @@
           </select>
         </div>
       }
+      <div class="facet">
+        <h3>Statut</h3>
+        <div class="chips">
+          @for (st of statuses; track st.value) {
+            <button type="button" class="chip" [class.on]="selectedStatuses().includes(st.value)" [style.--chip]="st.color" (click)="toggleStatusFilter(st.value)">{{ st.label }}</button>
+          }
+        </div>
+      </div>
       @for (tx of taxonomies.taxonomies(); track tx.id) {
         <div class="facet">
           <h3 [style.color]="tx.color">{{ tx.name }}</h3>
@@ -93,9 +102,13 @@
         <span class="thumb">
           <img [src]="artworks.thumbUrl(a)" [alt]="a.title" loading="lazy" />
           @if (selecting()) { <span class="check">{{ selectedIds().has(a.id) ? '✓' : '' }}</span> }
+          <app-status-badge class="status" [status]="a.status" />
         </span>
         <span class="body">
-          <span class="title">{{ a.title }}@if (a.year) { <span class="muted"> · {{ a.year }}</span> }</span>
+          <span class="line">
+            <span class="title">{{ a.title }}@if (a.year) { <span class="muted"> · {{ a.year }}</span> }</span>
+            @if (a.price != null) { <span class="price">{{ a.price | price }}</span> }
+          </span>
           @if (showTags()) {
             @if (a.tagIds.length) {
               <app-tag-list [tagIds]="a.tagIds" size="sm" [max]="5" [interactive]="!selecting()" [highlight]="selectedTagIds()" (picked)="toggleTagFilter($event)" />
