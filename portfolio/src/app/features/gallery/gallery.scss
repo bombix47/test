@@ -38,3 +38,34 @@
   .filters-top { flex-wrap: wrap; select { flex: 1; } }
   .bulk { top: 60px; }
 }
+
+.works { align-items: start; }
+.work {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s, box-shadow 0.15s;
+  &:hover { transform: translateY(-2px); box-shadow: var(--shadow); .thumb img { transform: scale(1.03); } }
+  &.selected { outline: 3px solid var(--accent); outline-offset: -3px; .check { background: var(--accent); } }
+
+  .thumb {
+    position: relative;
+    display: block;
+    aspect-ratio: 1;
+    background: var(--surface-2);
+    overflow: hidden;
+    img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.25s; }
+  }
+  .check {
+    position: absolute; top: 0.5rem; left: 0.5rem; width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid #fff; background: rgba(0, 0, 0, 0.35); display: grid; place-items: center; color: #fff; font-size: 0.8rem;
+  }
+  .body { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.5rem 0.6rem 0.6rem; }
+  .title { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .none { font-size: 0.72rem; }
+}

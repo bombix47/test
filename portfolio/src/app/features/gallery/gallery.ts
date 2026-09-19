@@ -5,12 +5,13 @@ import { CollectionStore } from '../../core/collection.store';
 import { TaxonomyStore } from '../../core/taxonomy.store';
 import { Artwork } from '../../core/models';
 import { TagChips } from '../../shared/tag-chips';
+import { TagList } from '../../shared/tag-list';
 
 type Sort = 'recent' | 'title' | 'year';
 
 @Component({
   selector: 'app-gallery',
-  imports: [RouterLink, TagChips],
+  imports: [RouterLink, TagChips, TagList],
   templateUrl: './gallery.html',
   styleUrl: './gallery.scss',
 })
@@ -28,6 +29,8 @@ export class Gallery {
   readonly collectionId = signal<string>('');
   readonly sort = signal<Sort>('recent');
   readonly filtersOpen = signal(false);
+  /** Affichage des mots-clés sous les vignettes (mémorisé). */
+  readonly showTags = signal(localStorage.getItem('gallery.showTags') !== '0');
 
   readonly selecting = signal(false);
   readonly selectedIds = signal<Set<string>>(new Set());
@@ -77,6 +80,11 @@ export class Gallery {
     else if (!col) list = [...list].sort((a, b) => b.createdAt - a.createdAt);
     return list;
   });
+
+  toggleShowTags() {
+    this.showTags.update((v) => !v);
+    localStorage.setItem('gallery.showTags', this.showTags() ? '1' : '0');
+  }
 
   toggleTagFilter(id: string) {
     this.selectedTagIds.update((l) => (l.includes(id) ? l.filter((t) => t !== id) : [...l, id]));

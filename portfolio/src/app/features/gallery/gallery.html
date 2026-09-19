@@ -35,6 +35,7 @@
     @if (hasFilters()) {
       <button type="button" class="btn ghost" (click)="clearFilters()">Effacer</button>
     }
+    <button type="button" class="btn" [class.primary]="showTags()" (click)="toggleShowTags()" [title]="showTags() ? 'Masquer les mots-clés sous les vignettes' : 'Afficher les mots-clés sous les vignettes'">＃</button>
   </div>
 
   @if (filtersOpen()) {
@@ -86,12 +87,23 @@
 } @else if (!filtered().length) {
   <div class="empty">Aucune œuvre ne correspond aux filtres.</div>
 } @else {
-  <div class="grid">
+  <div class="grid works">
     @for (a of filtered(); track a.id) {
-      <a class="tile" [class.selected]="selectedIds().has(a.id)" [routerLink]="selecting() ? null : ['/oeuvre', a.id]" (click)="onTileClick(a, $event)">
-        <img [src]="artworks.thumbUrl(a)" [alt]="a.title" loading="lazy" />
-        @if (selecting()) { <span class="check">{{ selectedIds().has(a.id) ? '✓' : '' }}</span> }
-        <span class="caption">{{ a.title }}@if (a.year) { · {{ a.year }} }</span>
+      <a class="work" [class.selected]="selectedIds().has(a.id)" [routerLink]="selecting() ? null : ['/oeuvre', a.id]" (click)="onTileClick(a, $event)">
+        <span class="thumb">
+          <img [src]="artworks.thumbUrl(a)" [alt]="a.title" loading="lazy" />
+          @if (selecting()) { <span class="check">{{ selectedIds().has(a.id) ? '✓' : '' }}</span> }
+        </span>
+        <span class="body">
+          <span class="title">{{ a.title }}@if (a.year) { <span class="muted"> · {{ a.year }}</span> }</span>
+          @if (showTags()) {
+            @if (a.tagIds.length) {
+              <app-tag-list [tagIds]="a.tagIds" size="sm" [max]="5" [interactive]="!selecting()" [highlight]="selectedTagIds()" (picked)="toggleTagFilter($event)" />
+            } @else {
+              <span class="muted small none">Sans mot-clé</span>
+            }
+          }
+        </span>
       </a>
     }
   </div>
