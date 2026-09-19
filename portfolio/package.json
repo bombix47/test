@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "build:pages": "ng build --base-href \"${PAGES_BASE_HREF:-/}\" && cp dist/portfolio/browser/index.html dist/portfolio/browser/404.html && touch dist/portfolio/browser/.nojekyll"
   },
   "private": true,
   "packageManager": "npm@11.12.1",

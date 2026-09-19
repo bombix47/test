@@ -29,6 +29,17 @@ npm run build      # dist/portfolio/browser
 
 Node ≥ 22.22.3 ou ≥ 24.15 (exigence Angular 22).
 
+## Déploiement GitHub Pages (POC)
+
+Le workflow `.github/workflows/deploy-pages.yml` builde et publie automatiquement sur `https://<owner>.github.io/<repo>/` à chaque push sur `master` touchant `portfolio/` (ou manuellement via *Run workflow*).
+
+Prérequis, une seule fois : **Settings → Pages → Source : GitHub Actions**.
+
+Détails techniques :
+- `npm run build:pages` lit `PAGES_BASE_HREF` (ex. `/test/`) pour le `<base href>`, copie `index.html` en `404.html` (fallback SPA pour les URL profondes) et ajoute `.nojekyll`.
+- Le service worker et le manifest sont générés avec le bon préfixe, l'app est installable sur l'écran d'accueil du téléphone (HTTPS fourni par Pages).
+- Les données restent dans le navigateur de l'appareil : Pages ne sert que des fichiers statiques.
+
 ## Architecture
 
 ```
