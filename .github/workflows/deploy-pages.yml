@@ -2,8 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [master]
-    paths: ['portfolio/**', '.github/workflows/deploy-pages.yml']
+    branches: [master, claude/artist-portfolio-app-6oasfp]
+    paths: ['portfolio/**', 'bigData.html', '.github/workflows/deploy-pages.yml']
   workflow_dispatch:
 
 permissions:
@@ -28,11 +28,17 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: portfolio/package-lock.json
+      # Bascule la source Pages sur "GitHub Actions" si ce n'est pas déjà fait
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - run: npm ci
       # Le site est servi sous https://<owner>.github.io/<repo>/
       - run: npm run build:pages
         env:
           PAGES_BASE_HREF: /${{ github.event.repository.name }}/
+      # Conserve la page existante à la racine du site
+      - run: cp ../bigData.html dist/portfolio/browser/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: portfolio/dist/portfolio/browser
