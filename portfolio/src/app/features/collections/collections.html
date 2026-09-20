@@ -12,21 +12,28 @@
 @if (!collections.collections().length) {
   <div class="empty">Aucune collection. Créez-en une, puis ajoutez-y des œuvres depuis la galerie (mode Sélectionner) ou depuis la fiche d'une œuvre.</div>
 } @else {
-  <div class="cards">
+  <ul class="list card">
     @for (c of collections.collections(); track c.id) {
-      <a class="col card" [routerLink]="['/collections', c.id]">
-        <div class="mosaic" [class.one]="covers().get(c.id)!.length <= 1">
-          @for (a of covers().get(c.id); track a.id) {
-            <img [src]="artworks.thumbUrl(a)" [alt]="a.title" loading="lazy" />
-          } @empty {
-            <span class="muted">Vide</span>
-          }
-        </div>
-        <div class="info">
-          <h3>{{ c.name }}</h3>
-          <p class="muted small">{{ c.artworkIds.length }} œuvre{{ c.artworkIds.length > 1 ? 's' : '' }}</p>
-        </div>
-      </a>
+      <li>
+        <a class="row-item" [routerLink]="['/collections', c.id]">
+          <span class="thumbs">
+            @for (a of covers().get(c.id); track a.id) {
+              <img [src]="artworks.thumbUrl(a)" [alt]="a.title" loading="lazy" />
+            } @empty {
+              <span class="ph"></span>
+            }
+            @if (c.artworkIds.length > 5) { <span class="more">+{{ c.artworkIds.length - 5 }}</span> }
+          </span>
+          <span class="txt">
+            <span class="name">{{ c.name }}</span>
+            <span class="muted small">
+              {{ c.artworkIds.length }} œuvre{{ c.artworkIds.length > 1 ? 's' : '' }}
+              @if (c.description) { · {{ c.description }} }
+            </span>
+          </span>
+          <span class="chev">›</span>
+        </a>
+      </li>
     }
-  </div>
+  </ul>
 }

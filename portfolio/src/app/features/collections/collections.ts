@@ -16,11 +16,11 @@ export class Collections {
 
   readonly newName = signal('');
 
-  /** Jusqu'à 4 vignettes de couverture par collection. */
+  /** Jusqu'à 5 miniatures par collection. */
   readonly covers = computed(() => {
     const byId = this.artworks.byId();
     return new Map(
-      this.collections.collections().map((c) => [c.id, c.artworkIds.map((id) => byId.get(id)).filter((a): a is Artwork => !!a).slice(0, 4)]),
+      this.collections.collections().map((c) => [c.id, c.artworkIds.map((id) => byId.get(id)).filter((a): a is Artwork => !!a).slice(0, 5)]),
     );
   });
 
